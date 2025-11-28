@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <windows.h>
 using namespace std;
 
 //our main grid and a copy to remember which cells were originally filled
@@ -13,7 +14,11 @@ int pts = 0;  // player score
 bool isValidMove(int row, int col, int num);
 void fillGrid();
 void randomizeGrid();
-void removeCells();
+void removeCells(int level);
+int selectDifficulty();
+void showMenu();
+void showErrors();
+void getHint();
 void print_sudoku_board();
 bool isComplete();
 void saveSolution();
@@ -26,13 +31,13 @@ int main() {
     srand(time(0));//for unique puzzles each time
     
     cout << "\n================================\n";
-    cout << "   WELCOME TO SUDOKU   \n";
+    cout << "        WELCOME TO SUDOKU   \n";
     cout << "================================\n";
-    
+     int difficulty = selectDifficulty();
     fillGrid();
     randomizeGrid();
     saveSolution();
-    removeCells();
+    removeCells(difficulty);
     saveOriginal();
     
     gameLoop();
@@ -114,9 +119,14 @@ void fillGrid() {
 }
 
 //removes 30 random cells to create the puzzle
-void removeCells() {
+void removeCells(int level) {
+    int Remove = 30;
+    if (level == 2)
+        Remove = 40;
+    else if (level == 3) 
+        Remove = 50;
     int removed = 0;
-    while (removed < 30) {
+    while (removed < Remove) {
         int row = rand() % 9;
         int col = rand() % 9;
         if (grid[row][col] != 0) {
@@ -199,19 +209,99 @@ void handleFillCell() {
             pts -= 5;
         }
     }
+Sleep(1500);
+}
+//select difficulty at start
+int selectDifficulty(){
+    int difficulty;
+    while (true) {
+        cout << "\nSelect difficulty:\n";
+        cout << "1. Easy (30 empty cells)\n";
+        cout << "2. Medium (40 empty cells)\n";
+        cout << "3. Hard (50 empty cells)\n";
+        cout << "Enter choice (1-3): ";
+        cin >> difficulty;
+        
+        if (difficulty >= 1 && difficulty <= 3) {
+            return difficulty;
+           }
+        cout << "Invalid choice! Please enter 1, 2, or 3.\n";
+     }
+}
+//show menu options
+void showMenu() {
+    cout << "\n1. Fill cell\n";
+    cout << "2. Check errors\n";
+    cout << "3. Get hint (-10 pts)\n";
+    cout << "4. Quit\n";
+    cout << "Enter choice: ";
+}
+//check if grid satisfies sudoku rules
+void showErrors() {
+    bool hasErrors = false;
+    
+    for (int i = 0; i < 9; i++) {
+        for (int j = 0; j < 9; j++) {
+            if (grid[i][j] != 0) { //Only check cells that actually have a number
+                int temp = grid[i][j];//store the number
+                grid[i][j] = 0;//clear cell for check
+                if (!isValidMove(i, j, temp)) {//returns error if number cannot be placed
+                    hasErrors = true;
+                   }//putting back after checking
+                grid[i][j] = temp;
+          }
+        }
+    }
+    
+    if (hasErrors) {
+        cout << "Current grid does NOT satisfy Sudoku rules.\n";
+    } else {
+        cout << "Current grid satisfies Sudoku rules.\n";
+    }
+}
+//give hint for first empty cell
+void getHint() {
+    for (int i = 0; i < 9; i++) {//going through each cell
+        for (int j = 0; j < 9; j++){
+            if (grid[i][j] == 0) {//goes in if the cell is empty
+                cout << "Hint: Row " << i+1 << ", Col " << j+1;//giving player correct num for the cell
+                cout << " -> " << solvedGrid[i][j] << endl;//uses solved grid for hints
+                pts -= 10;
+                cout << "(-10 points)\n";
+                return;
+               }
+         }
+    }
+    cout << "No empty cells to hint!\n";
 }
 //draws the board,checks win condition.handle moves
+// main game loop with menu
 void gameLoop() {
+    int choice;
     while (true) {
         cout << "\n=== SUDOKU === Score: " << pts << "\n";
         print_sudoku_board();
-        
         if (isComplete()) {
             cout << "\n*** CONGRATULATIONS! YOU WIN! ***\n";
             cout << "Final Score: " << pts << endl;
             break;
         }
-        
-        handleFillCell();
+        showMenu();
+        cin >> choice; 
+        if (choice == 1) {
+            handleFillCell();
+        }
+        else if (choice == 2) {
+            showErrors();
+            Sleep(3500);
+        }
+        else if (choice == 3) {
+            getHint();
+            Sleep(5000);
+        }
+        else if (choice == 4) {
+            cout << "Thanks for playing!\n";
+            break;
+        }
     }
 }
