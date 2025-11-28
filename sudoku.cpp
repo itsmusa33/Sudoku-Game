@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <ctime>
 using namespace std;
+hello what os up
 
 // our main grid and a copy to remember which cells were originally filled
 int grid[9][9];
