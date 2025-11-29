@@ -11,6 +11,8 @@ int solvedGrid[9][9];
 int pts = 0;  // player score
 
 //function prototypes
+void clr(int c);
+void rst();
 bool isValidMove(int row, int col, int num);
 void fillGrid();
 void randomizeGrid();
@@ -73,6 +75,15 @@ bool isValidMove(int row, int col, int num) {
     //if we reach here then move is valid
     return true;
 }
+// set console color
+void clr(int c) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), c);
+}
+
+// reset to default color
+void rst() {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+}
 void randomizeGrid(){
   //shuffle rows within each block of 3 rows
 for (int block = 0; block < 3; block++){
@@ -93,6 +104,17 @@ for (int block = 0; block < 3; block++){
         grid[i][col1] = grid[i][col2];
         grid[i][col2] = temp;
       }
+}
+
+    // swap two random numbers for more variety
+int num1 = (rand() % 9) + 1;
+int num2 = (rand() % 9) + 1;
+for (int i = 0; i < 9; i++) {
+    for (int j = 0; j < 9; j++) {
+        if (grid[i][j] == num1) grid[i][j] = num2;
+        else if (grid[i][j] == num2) grid[i][j] = num1;
+    }
+}
 }
 
 }
@@ -157,11 +179,28 @@ void print_sudoku_board() {
     for (int i = 0; i < 9; i++) {
         cout << i+1 << " | ";
         for (int j = 0; j < 9; j++) {
-            cout << grid[i][j] << " ";
-            if ((j + 1) % 3 == 0) cout << "| ";  //vertical divider
+            int val = grid[i][j];
+            
+            if (val == 0) {
+                clr(96);  // yellow for empty
+                cout << "0";
+                rst();
+            }
+            else if (origGrid[i][j] == 0 && val != 0) {
+                // player-filled cell
+                if (val == solvedGrid[i][j]) clr(32);  // green = correct
+                else clr(64);  // red = wrong
+                cout << val;
+                rst();
+            }
+            else {
+                cout << val;  // original cell, no color
+            }
+            cout << " ";
+            if ((j + 1) % 3 == 0) cout << "| ";
         }
         cout << endl;
-        if ((i + 1) % 3 == 0) cout << "  -------------------------\n";  // horizontal divider
+        if ((i + 1) % 3 == 0) cout << "  -------------------------\n";
     }
 }
 //just checks if there are any empty cells left
@@ -201,11 +240,16 @@ void handleFillCell() {
     }
     else {
         grid[row][col] = num;//Fill the selected cell
-        if (num == solvedGrid[row][col]) { //gives points if entered num is correct
+        if (num == solvedGrid[row][col]) 
+        { //gives points if entered num is correct
+           clr(32);
             cout << "Correct! +10 points\n";
+            rst();
             pts += 10;
         } else {
+           clr(64);
             cout << "Wrong! -5 points\n";
+            rst();
             pts -= 5;
         }
     }
@@ -254,9 +298,13 @@ void showErrors() {
     }
     
     if (hasErrors) {
+        clr(64);
         cout << "Current grid does NOT satisfy Sudoku rules.\n";
+        rst();
     } else {
+        clr(32);
         cout << "Current grid satisfies Sudoku rules.\n";
+        rst();
     }
 }
 //give hint for first empty cell
@@ -267,7 +315,9 @@ void getHint() {
                 cout << "Hint: Row " << i+1 << ", Col " << j+1;//giving player correct num for the cell
                 cout << " -> " << solvedGrid[i][j] << endl;//uses solved grid for hints
                 pts -= 10;
+                clr(64);
                 cout << "(-10 points)\n";
+                rst();
                 return;
                }
          }
@@ -279,6 +329,7 @@ void getHint() {
 void gameLoop() {
     int choice;
     while (true) {
+        system("cls");
         cout << "\n=== SUDOKU === Score: " << pts << "\n";
         print_sudoku_board();
         if (isComplete()) {
