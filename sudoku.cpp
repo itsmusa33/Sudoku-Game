@@ -250,9 +250,7 @@ void fillGrid() {
     }
 }
 
-//removes 30 random cells to create the puzzle
-// removes cells to create the puzzle
-// keeps trying until we get a puzzle with exactly one solution
+//keeps removing cells until we get a grid that has a unique solution
 void removeCells(int level){
     int toRemove = 26;  //easy
     if (level == 2) 
