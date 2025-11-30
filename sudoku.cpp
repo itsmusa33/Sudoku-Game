@@ -277,9 +277,9 @@ void removeCells(int level){
                }
          }
     } while (!UniqueSol());  //keep trying if not unique
-    
+    Sleep(2000);
     cout << "Puzzle ready!\n";
-    Sleep(1000);
+    Sleep(2000);
 }
 void saveSolution(){ //save the solved grid before removing cells
     for (int i = 0; i < 9; i++) {
@@ -353,10 +353,12 @@ void handleFillCell() {
     //Basic safety checks for invalid input
     if (row < 0 || row > 8 || col < 0 || col > 8 || num < 0 || num > 9) {
         cout << "Invalid input!\n";
+         Sleep(3000);
         return;
     }
     if (origGrid[row][col] != 0) {
         cout << "Can't change that cell!\n";
+        Sleep(3000);
         return;
     }
     
@@ -379,7 +381,7 @@ void handleFillCell() {
             pts -= 5;
         }
     }
-Sleep(1500);
+Sleep(4000);
 }
 //select difficulty at start
 int selectDifficulty(){
@@ -402,12 +404,12 @@ int selectDifficulty(){
 // bonus points for finishing fast
 int calculateTimeBonus() {
     int elapsed = time(0) - startTime;
-    if (elapsed < 120) 
-        return 50;   // under 2 min
-    if (elapsed < 300)
-        return 30;   // under 5 min
-    if (elapsed < 600) 
-        return 10;   // under 10 min
+    if (elapsed < 300) 
+        return 100;   // under 5 min
+    if (elapsed < 600)
+        return 50;   // under 10 min
+    if (elapsed < 1200) 
+        return 30;   // under 20 min
     return 0;
 }
 //show menu options
