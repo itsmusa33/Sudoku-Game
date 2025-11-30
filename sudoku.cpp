@@ -10,7 +10,8 @@ int origGrid[9][9];
 int solvedGrid[9][9];
 int gridfw[9][9];  //for forward solution
 int gridbk[9][9];  //for backward solution
-int pts = 0;  // player score
+int pts = 0;  //player score
+long startTime;
 
 //function prototypes
 void clr(int c);
@@ -25,6 +26,7 @@ void fillGrid();
 void randomizeGrid();
 void removeCells(int level);
 int selectDifficulty();
+int calculateTimeBonus();
 void showMenu();
 void showErrors();
 void getHint();
@@ -165,7 +167,11 @@ bool UniqueSol(){
 }
 //auto-solve function costing 20 points
 void handleAutoSolve(){
-    pts -= 20;  //minus score
+    pts -= 20; //minus score
+    
+    int elapsed = time(0) - startTime;
+    int mins = elapsed / 60;
+    int secs = elapsed % 60;
     
     system("cls");
     clr(96);
@@ -173,14 +179,20 @@ void handleAutoSolve(){
     rst();
     Sleep(4000);
     
-    solveGrid();  //solvin it
+    solveGrid(); //solvin it
     
     system("cls");
     clr(32);
     cout << "\n=== SOLVED! ===\n";
     rst();
     print_sudoku_board();
-    cout << "\nFinal Score: " << pts << endl;
+    
+    cout << "\nTime: " << mins << ":";
+    if (secs < 10) {
+        cout << "0";
+    }
+    cout << secs << endl;
+    cout << "Final Score: " << pts << endl;
     cout << "\nThanks for playing!\n";
 }
 void randomizeGrid(){
@@ -283,6 +295,8 @@ void saveOriginal() { //save original grid to track which cells can be changed
     }
 }
 
+startTime = time(0);  // start timer
+
 //displays grid
 void print_sudoku_board() {
     cout << "\n    1 2 3   4 5 6   7 8 9\n";
@@ -383,6 +397,18 @@ int selectDifficulty(){
         cout << "Invalid choice! Please enter 1, 2, or 3.\n";
      }
 }
+
+// bonus points for finishing fast
+int calculateTimeBonus() {
+    int elapsed = time(0) - startTime;
+    if (elapsed < 120) 
+        return 50;   // under 2 min
+    if (elapsed < 300)
+        return 30;   // under 5 min
+    if (elapsed < 600) 
+        return 10;   // under 10 min
+    return 0;
+}
 //show menu options
 void showMenu() {
     cout << "\n1. Fill cell\n";
@@ -438,17 +464,50 @@ void getHint() {
 }
 //draws the board,checks win condition.handle moves
 // main game loop with menu
-void gameLoop() {
+void gameLoop() 
+{
     int choice;
     while (true) {
         system("cls");
-        cout << "\n=== SUDOKU === Score: " << pts << "\n";
+        int seconds = time(0) - startTime;
+int mins = seconds / 60;
+int secs = seconds % 60;
+
+cout << "\n=== SUDOKU === Score: " << pts << " | Time: " << mins << ":";
+if (secs < 10)
+{
+    cout << "0";
+}
+cout << secs << "\n";
+
         print_sudoku_board();
-        if (isComplete()) {
-            cout << "\n*** CONGRATULATIONS! YOU WIN! ***\n";
-            cout << "Final Score: " << pts << endl;
-            break;
-        }
+       if (isComplete()) 
+       {
+    int bonus = calculateTimeBonus();
+    pts += bonus;
+    
+    int elapsed = time(0) - startTime;
+    int mins = elapsed / 60;
+    int secs = elapsed % 60;
+    
+    clr(32);
+    cout << "\n*** CONGRATULATIONS! YOU WIN! ***\n";
+    rst();
+    
+    cout << "Time: " << mins << ":";
+    if (secs < 10) {
+        cout << "0";
+    }
+    cout << secs << endl;
+    
+    if (bonus > 0) {
+        clr(10);
+        cout << "Time Bonus: +" << bonus << " points!\n";
+        rst();
+    }
+    cout << "Final Score: " << pts << endl;
+    break;
+}
         showMenu();
         cin >> choice; 
         if (choice == 1) {
