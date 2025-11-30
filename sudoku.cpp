@@ -8,12 +8,19 @@ using namespace std;
 int grid[9][9];
 int origGrid[9][9];
 int solvedGrid[9][9];
+int gridfw[9][9];  //for forward solution
+int gridbk[9][9];  //for backward solution
 int pts = 0;  // player score
 
 //function prototypes
 void clr(int c);
 void rst();
 bool isValidMove(int row, int col, int num);
+bool solveForward();
+bool solveBackward();
+bool hasUniqueSolution();
+bool solveGrid();
+void handleAutoSolve();
 void fillGrid();
 void randomizeGrid();
 void removeCells(int level);
@@ -84,6 +91,98 @@ void clr(int c) {
 void rst() {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
 }
+//solver that tries each num from 1 to 9 and tries with diff num if it gets stuck
+bool solveGrid(){
+    for (int row = 0; row < 9; row++){
+        for (int col = 0; col < 9; col++){
+            if (grid[row][col] == 0){//lookin for empty cell
+                for (int num = 1; num <= 9; num++){//trying nums 1 to 9
+                    if (isValidMove(row, col, num)) {
+                        grid[row][col] = num;  //placing number
+                        if (solveGrid()) 
+                            return true;  //keep going
+                        grid[row][col] = 0;  //if doesnt work 
+                    }
+                 }
+                return false;  //if no num works
+             }
+       }
+    }
+    return true;  //when there are no empty cells it is solved
+}
+bool solveBackward(){//same as solvegrid but tries from 9 to 1(opposite order)
+    for (int row = 0; row < 9; row++){
+        for (int col = 0; col < 9; col++){
+            if (grid[row][col] == 0){
+                for (int num = 9; num >= 1; num--){//9 to 1
+                    if (isValidMove(row, col, num)){
+                        grid[row][col] = num;
+                        if (solveBackward())
+                            return true;
+                        grid[row][col] = 0;
+                     }
+                }
+                return false;
+         }
+        }
+    }
+    return true;
+}
+//this checks for unique solution by solving in 2 ways if they are same then its unique
+bool UniqueSol(){
+    int backup[9][9];//for saving grid
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            backup[i][j] = grid[i][j];
+    //solve for 1 to 9(forward)
+    solveGrid();
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            gridfw[i][j] = grid[i][j];
+    //make the grid same as before
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            grid[i][j] = backup[i][j];
+    
+    //solve going backward (9-1) and then save the result
+    solveBackward();
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            gridbk[i][j] = grid[i][j];
+    
+    //restore the grid again
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            grid[i][j] = backup[i][j];
+    
+   //comparing solutions
+    for (int i = 0; i < 9; i++)
+        for (int j = 0; j < 9; j++)
+            if (gridfw[i][j] != gridbk[i][j])
+                return false;  //different means multiple solutions
+    
+    return true;  //same means unique sol
+}
+//auto-solve function costing 20 points
+void handleAutoSolve(){
+    pts -= 20;  //minus score
+    
+    system("cls");
+    clr(96);
+    cout << "\n=== SOLVING... ===\n";
+    rst();
+    Sleep(4000);
+    
+    solveGrid();  //solvin it
+    
+    system("cls");
+    clr(32);
+    cout << "\n=== SOLVED! ===\n";
+    rst();
+    print_sudoku_board();
+    cout << "\nFinal Score: " << pts << endl;
+    cout << "\nThanks for playing!\n";
+}
 void randomizeGrid(){
   //shuffle rows within each block of 3 rows
 for (int block = 0; block < 3; block++){
@@ -116,8 +215,6 @@ for (int i = 0; i < 9; i++) {
     }
 }
 }
-
-}
 //hardcoded complete sudoku grid
 void fillGrid() {
     int puzzle[9][9] = {
@@ -141,21 +238,35 @@ void fillGrid() {
 }
 
 //removes 30 random cells to create the puzzle
-void removeCells(int level) {
-    int Remove = 30;
-    if (level == 2)
-        Remove = 40;
-    else if (level == 3) 
-        Remove = 50;
-    int removed = 0;
-    while (removed < Remove) {
-        int row = rand() % 9;
-        int col = rand() % 9;
-        if (grid[row][col] != 0) {
-            grid[row][col] = 0;
-            removed++;
-        }
-    }
+// removes cells to create the puzzle
+// keeps trying until we get a puzzle with exactly one solution
+void removeCells(int level){
+    int toRemove = 26;  //easy
+    if (level == 2) 
+        toRemove = 36;  //medium
+    else if (level == 3)
+        toRemove = 42;  //hard
+    
+    cout << "Generating puzzle...\n";
+    //keep trying until we get a puzzle with a unique sol
+    do {
+        //reset grid to the solved state
+        for (int i = 0; i < 9; i++)
+            for (int j = 0; j < 9; j++)
+                grid[i][j] = solvedGrid[i][j];
+        int removed = 0; //randomly remove cells
+        while (removed < toRemove){
+            int r = rand() % 9;
+            int c = rand() % 9;
+            if (grid[r][c] != 0){
+                grid[r][c] = 0;
+                removed++;
+               }
+         }
+    } while (!UniqueSol());  //keep trying if not unique
+    
+    cout << "Puzzle ready!\n";
+    Sleep(1000);
 }
 void saveSolution(){ //save the solved grid before removing cells
     for (int i = 0; i < 9; i++) {
@@ -260,9 +371,9 @@ int selectDifficulty(){
     int difficulty;
     while (true) {
         cout << "\nSelect difficulty:\n";
-        cout << "1. Easy (30 empty cells)\n";
-        cout << "2. Medium (40 empty cells)\n";
-        cout << "3. Hard (50 empty cells)\n";
+        cout << "1. Easy \n";
+        cout << "2. Medium \n";
+        cout << "3. Hard \n";
         cout << "Enter choice (1-3): ";
         cin >> difficulty;
         
@@ -277,7 +388,8 @@ void showMenu() {
     cout << "\n1. Fill cell\n";
     cout << "2. Check errors\n";
     cout << "3. Get hint (-10 pts)\n";
-    cout << "4. Quit\n";
+    cout << "4. Auto-solve (-20 pts)\n";
+    cout << "5. Quit\n";
     cout << "Enter choice: ";
 }
 //check if grid satisfies sudoku rules
@@ -350,7 +462,12 @@ void gameLoop() {
             getHint();
             Sleep(5000);
         }
-        else if (choice == 4) {
+         else if (choice == 4) {
+            handleAutoSolve();
+            Sleep(2000);
+            break;
+        }
+        else if (choice == 5) {
             cout << "Thanks for playing!\n";
             break;
         }
