@@ -50,6 +50,7 @@ int main() {
     saveSolution();
     removeCells(difficulty);
     saveOriginal();
+    startTime = time(0);  // start timer
     
     gameLoop();
     
@@ -295,7 +296,7 @@ void saveOriginal() { //save original grid to track which cells can be changed
     }
 }
 
-startTime = time(0);  // start timer
+
 
 //displays grid
 void print_sudoku_board() {
